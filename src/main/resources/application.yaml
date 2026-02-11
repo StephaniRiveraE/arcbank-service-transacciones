@@ -1,0 +1,75 @@
+spring:
+  datasource:
+    # Se prefiere la inyección directa via SPRING_DATASOURCE_URL en K8s.
+    # Esta configuración es un fallback local.
+    url: jdbc:postgresql://${DB_URL:localhost:5432/db_transacciones}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASS:admin}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      connection-timeout: 5000
+      maximum-pool-size: 5
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+# Actuator Configuration for K8s Probes
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+
+  rabbitmq:
+    host: ${SPRING_RABBITMQ_HOST:b-455e546c-be71-4fe2-ba0f-bd3112e6c220.mq.us-east-2.on.aws}
+    port: ${SPRING_RABBITMQ_PORT:5671}
+    username: ${SPRING_RABBITMQ_USERNAME:arcbank}
+    password: ${SPRING_RABBITMQ_PASSWORD:arcbankpass}
+    virtual-host: /
+    ssl:
+      enabled: ${SPRING_RABBITMQ_SSL_ENABLED:true}
+      algorithm: ${SPRING_RABBITMQ_SSL_ALGORITHM:TLSv1.2}
+
+server:
+  port: ${SERVER_PORT:8080}
+
+app:
+  feign:
+    cuentas-url: ${CUENTAS_URL:http://localhost:8081}
+    clientes-url: ${CLIENTES_URL:http://localhost:8080}
+  switch:
+    network-url: ${APP_SWITCH_NETWORK_URL:http://34.16.106.7:8000}
+    apikey: ${APP_SWITCH_APIKEY:ARCBANK_SECRET_KEY_2025_XYZ}
+  apim:
+    endpoint: ${APIM_ENDPOINT:https://api-gateway.us-east-2.amazonaws.com/default}
+    cognito:
+      domain: ${COGNITO_DOMAIN:https://banca-ecosistema.auth.us-east-2.amazoncognito.com}
+      client-id: ${COGNITO_CLIENT_ID:change-me}
+      client-secret: ${COGNITO_CLIENT_SECRET:change-me}
+      scope: ${COGNITO_SCOPE:https://switch-api.com/transfers.write}
+  banco:
+    codigo: ${BANCO_CODIGO:ARCBANK}
+
+bank:
+  queue:
+    name: ${BANK_QUEUE_NAME:q.bank.ARCBANK.in}
+
+logging:
+  level:
+    com.arcbank: DEBUG
+    org.springframework.web: INFO
