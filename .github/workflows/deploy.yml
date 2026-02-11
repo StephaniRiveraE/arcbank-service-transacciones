@@ -106,17 +106,17 @@ jobs:
                     env:
                       - name: SPRING_PROFILES_ACTIVE
                         value: "prod"
-                      - name: SPRING_DATASOURCE_URL
+                      - name: DB_URL
                         valueFrom:
                           secretKeyRef:
                             name: ${{ env.SECRET_NAME }}
                             key: ${{ env.SECRET_KEY_URL }}
-                      - name: SPRING_DATASOURCE_USERNAME
+                      - name: DB_USER
                         valueFrom:
                           secretKeyRef:
                             name: ${{ env.SECRET_NAME }}
                             key: ${{ env.SECRET_KEY_USER }}
-                      - name: SPRING_DATASOURCE_PASSWORD
+                      - name: DB_PASS
                         valueFrom:
                           secretKeyRef:
                             name: ${{ env.SECRET_NAME }}
