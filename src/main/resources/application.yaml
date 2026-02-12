@@ -11,12 +11,16 @@ spring:
       maximum-pool-size: 5
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
     show-sql: false
     properties:
       hibernate:
         format_sql: true
     database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: false
 
 # Actuator Configuration for K8s Probes
 management:
