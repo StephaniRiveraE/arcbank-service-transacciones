@@ -123,6 +123,21 @@ jobs:
                             key: ${{ env.SECRET_KEY_PASS }}
                       - name: SPRING_JPA_HIBERNATE_DDL_AUTO
                         value: "update"
+                      - name: APIM_ENDPOINT
+                        value: "http://switch-ms-nucleo.switch.svc.cluster.local"
+                      - name: SPRING_RABBITMQ_HOST
+                        value: "b-455e546c-be71-4fe2-ba0f-bd3112e6c220.mq.us-east-2.on.aws"
+                      - name: SPRING_RABBITMQ_PORT
+                        value: "5671"
+                      - name: SPRING_RABBITMQ_USERNAME
+                        value: "arcbank"
+                      - name: SPRING_RABBITMQ_PASSWORD
+                        valueFrom:
+                          secretKeyRef:
+                            name: "rabbitmq-credentials"
+                            key: "password"
+                      - name: SPRING_RABBITMQ_SSL_ENABLED
+                        value: "true"
                     livenessProbe:
                       httpGet:
                         path: /actuator/health/liveness
