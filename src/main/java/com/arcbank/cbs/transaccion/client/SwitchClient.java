@@ -27,8 +27,9 @@ public interface SwitchClient {
         String enviarDevolucion(@RequestBody com.arcbank.cbs.transaccion.dto.SwitchDevolucionRequest request);
 
         // Account Lookup (Sincronizado con ms-directorio via APIM)
-        @PostMapping("/api/v2/switch/account-lookup")
-        Map<String, Object> validarCuentaExterna(@RequestBody Map<String, Object> request);
+        @GetMapping("/api/v2/switch/account-lookup")
+        Map<String, Object> validarCuentaExterna(
+                        @org.springframework.cloud.openfeign.SpringQueryMap Map<String, Object> request);
 
         // Health Check (Sincronizado con APIM)
         @GetMapping("/api/v2/switch/health")
