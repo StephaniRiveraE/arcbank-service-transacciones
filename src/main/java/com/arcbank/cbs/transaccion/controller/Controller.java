@@ -88,14 +88,10 @@ public class Controller {
                     .body(java.util.Map.of("error", "Faltan datos: targetBankId o targetAccountNumber"));
         }
 
-        // Mapeo temporal de nombres a códigos Switch
-        if ("BANTEC".equalsIgnoreCase(targetBankId)) {
-            targetBankId = "200100";
-        }
-
         // CORRECCIÓN: El Switch espera el BIC (BANTEC), no códigos numéricos.
-        // Mapeamos cualquier variante conocida al BIC correcto.
-        if ("100050".equals(targetBankId) || "200100".equals(targetBankId) || "BANTEC".equalsIgnoreCase(targetBankId)) {
+        // Mapeamos cualquier variante conocida (100050, 200100) al BIC oficial.
+        if (targetBankId != null && (targetBankId.equalsIgnoreCase("BANTEC") ||
+                targetBankId.equals("100050") || targetBankId.equals("200100"))) {
             targetBankId = "BANTEC";
         }
 

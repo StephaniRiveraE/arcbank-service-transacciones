@@ -205,11 +205,17 @@ public class SwitchClientService {
                 // Según la Guía v2.0, el request debe estar envuelto en header y body
                 java.util.Map<String, Object> header = java.util.Map.of(
                                 "originatingBankId", bancoCodigo,
+                                "messageNamespace", "acmt.023.001.02",
                                 "messageId", "VAL-" + UUID.randomUUID().toString().substring(0, 8));
 
+                // Para compatibilidad con Switch v2 y ms-directorio, enviamos formato plano y
+                // anidado
                 java.util.Map<String, Object> body = java.util.Map.of(
                                 "targetBankId", targetBankId,
-                                "targetAccountNumber", targetAccountNumber);
+                                "targetAccountNumber", targetAccountNumber,
+                                "creditor", java.util.Map.of(
+                                                "accountId", targetAccountNumber,
+                                                "bankId", targetBankId));
 
                 java.util.Map<String, Object> request = java.util.Map.of("header", header, "body", body);
 
