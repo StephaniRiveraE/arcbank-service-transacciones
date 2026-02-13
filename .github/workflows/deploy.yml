@@ -123,14 +123,14 @@ jobs:
                             key: ${{ env.SECRET_KEY_PASS }}
                       - name: SPRING_FLYWAY_BASELINE_ON_MIGRATE
                         value: "false"
-                       - name: APIM_ENDPOINT
+                      - name: APIM_ENDPOINT
                         value: "http://switch-ms-nucleo.switch.svc.cluster.local"
                       - name: COGNITO_CLIENT_ID
                         value: "3jprfuk1phejsm0sjr8p50n91e"
                       - name: COGNITO_CLIENT_SECRET
                         valueFrom:
                           secretKeyRef:
-                            name: "cognito-credentials"
+                            name: "arcbank-cognito-credentials"
                             key: "client-secret"
                       - name: COGNITO_DOMAIN
                         value: "https://auth-banca-digiconecu-dev-lhd4go.auth.us-east-2.amazoncognito.com"
@@ -145,7 +145,7 @@ jobs:
                       - name: SPRING_RABBITMQ_PASSWORD
                         valueFrom:
                           secretKeyRef:
-                            name: "rabbitmq-credentials"
+                            name: "arcbank-rabbitmq-credentials"
                             key: "password"
                       - name: SPRING_RABBITMQ_SSL_ENABLED
                         value: "true"
