@@ -90,14 +90,15 @@ public class Controller {
 
         // Mapeo temporal de nombres a códigos Switch
         if ("BANTEC".equalsIgnoreCase(targetBankId)) {
+            targetBankId = "200100";
+        }
+
+        // Mapeo temporal de nombres a códigos Switch
+        if ("BANTEC".equalsIgnoreCase(targetBankId)) {
             targetBankId = "100050";
         }
 
-        try {
-            return ResponseEntity.ok(transaccionService.validarCuentaExterna(targetBankId, targetAccountNumber));
-        } catch (Exception e) {
-            return ResponseEntity.status(400).body(java.util.Map.of("status", "ERROR", "message", e.getMessage()));
-        }
+        return ResponseEntity.ok(transaccionService.validarCuentaExterna(targetBankId, targetAccountNumber));
     }
 
     @GetMapping("/buscar/{referencia}")
