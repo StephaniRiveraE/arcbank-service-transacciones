@@ -62,14 +62,8 @@ jobs:
       
       - name: Verificar o Crear Deployment
         run: |
-          if kubectl get deployment ${{ env.SERVICE_NAME }} -n ${{ env.NAMESPACE }} > /dev/null 2>&1; then
-            echo "✅ Deployment existe, actualizando imagen..."
-            kubectl set image deployment/${{ env.SERVICE_NAME }} \
-              ${{ env.SERVICE_NAME }}=${{ env.IMAGE }} \
-              -n ${{ env.NAMESPACE }}
-          else
-            echo "📦 Deployment no existe, creando..."
-            cat <<EOF | kubectl apply -f -
+          echo "🚀 Aplicando configuración completa..."
+          cat <<EOF | kubectl apply -f -
           apiVersion: apps/v1
           kind: Deployment
           metadata:
@@ -173,7 +167,6 @@ jobs:
             selector:
               app: ${{ env.SERVICE_NAME }}
           EOF
-          fi
       
       - name: Esperar Rollout
         run: |
