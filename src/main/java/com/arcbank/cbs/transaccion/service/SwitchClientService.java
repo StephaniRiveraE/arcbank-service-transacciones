@@ -229,7 +229,7 @@ public class SwitchClientService {
                         return response;
                 } catch (feign.FeignException e) {
                         log.error("❌ Error API APIM ms-directorio (status {}): {}", e.status(), e.contentUTF8());
-                        throw new RuntimeException("El recurso solicitado no existe o el banco destino no respondió.");
+                        throw e; // Re-lanzar para que GlobalExceptionHandler maneje el detalle
                 } catch (Exception e) {
                         log.error("❌ Error de comunicación con ms-directorio: {}", e.getMessage());
                         throw new RuntimeException("Error de comunicación con la red interbancaria: " + e.getMessage());
