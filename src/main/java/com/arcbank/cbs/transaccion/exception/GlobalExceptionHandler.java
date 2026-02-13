@@ -35,6 +35,23 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(feign.FeignException.class)
+    public ResponseEntity<ErrorResponse> handleFeignException(feign.FeignException ex) {
+        log.error("Error en llamada externa (Feign): Status={}, Content={}", ex.status(), ex.contentUTF8());
+
+        String remoteMessage = ex.contentUTF8();
+        String mensaje = (remoteMessage != null && !remoteMessage.isBlank())
+                ? remoteMessage
+                : "Error en comunicación con la red interbancaria (Status: " + ex.status() + ")";
+
+        ErrorResponse error = ErrorResponse.builder()
+                .mensaje(mensaje)
+                .codigo("EXTERNAL_SERVICE_ERROR")
+                .fecha(LocalDateTime.now())
+                .build();
+        return new ResponseEntity<>(error, HttpStatus.valueOf(ex.status() > 0 ? ex.status() : 500));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneralException(Exception ex) {
         log.error("Error interno no controlado: ", ex);
