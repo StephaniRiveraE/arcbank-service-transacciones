@@ -138,4 +138,15 @@ public class Controller {
                     .body(java.util.Map.of("error", "No se pudo obtener saldo técnico: " + e.getMessage()));
         }
     }
+
+    @GetMapping("/red/bancos")
+    @Operation(summary = "Obtener listado de bancos habilitados en la red")
+    public ResponseEntity<?> obtenerBancos() {
+        try {
+            return ResponseEntity.ok(transaccionService.obtenerBancos());
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body(java.util.Map.of("error", "No se pudo obtener catálogo de bancos: " + e.getMessage()));
+        }
+    }
 }

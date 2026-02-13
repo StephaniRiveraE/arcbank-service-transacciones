@@ -881,4 +881,9 @@ public class TransaccionServiceImpl implements TransaccionService {
     public java.util.Map<String, Object> obtenerSaldoTecnico() {
         return switchClientService.obtenerSaldoTecnico();
     }
+
+    @Override
+    public java.util.List<java.util.Map<String, Object>> obtenerBancos() {
+        return switchClientService.obtenerBancos();
+    }
 }

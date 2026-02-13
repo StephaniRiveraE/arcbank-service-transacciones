@@ -10,32 +10,37 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import com.arcbank.cbs.transaccion.dto.SwitchTransferRequest;
-import com.arcbank.cbs.transaccion.dto.SwitchTransferResponse;
 
 @FeignClient(name = "apim-switch-gateway", url = "${app.apim.endpoint}", configuration = com.arcbank.cbs.transaccion.config.ApimConfig.class)
 public interface SwitchClient {
 
+        // RF-01: Inicio de transferencia
         @PostMapping("/api/v2/switch/transfers")
         String enviarTransferencia(@RequestBody SwitchTransferRequest request);
 
-        @GetMapping("/api/v1/red/bancos")
-        List<Map<String, Object>> obtenerBancos();
-
-        @GetMapping("/api/v2/transfers/health")
-        Map<String, String> healthCheck();
-
-        @PostMapping("/api/v2/switch/transfers/return")
-        String enviarDevolucion(@RequestBody com.arcbank.cbs.transaccion.dto.SwitchDevolucionRequest request);
-
-        @GetMapping("/api/v1/reference/iso20022/errors")
-        List<Map<String, String>> obtenerMotivosDevolucion();
-
+        // RF-04: Consulta de estado
         @GetMapping("/api/v2/switch/transfers/{instructionId}")
         Map<String, Object> consultarEstado(@PathVariable("instructionId") String instructionId);
 
-        @PostMapping("/api/v2/switch/accounts/lookup")
+        // RF-07: Devoluciones / Reversos
+        @PostMapping("/api/v2/switch/returns")
+        String enviarDevolucion(@RequestBody com.arcbank.cbs.transaccion.dto.SwitchDevolucionRequest request);
+
+        // Account Lookup (Sincronizado con APIM)
+        @PostMapping("/api/v2/switch/account-lookup")
         Map<String, Object> validarCuentaExterna(@RequestBody Map<String, Object> request);
 
-        @GetMapping("/funding/{bankId}")
-        Map<String, Object> obtenerSaldoTecnico(@PathVariable("bankId") String bankId);
+        // Health Check (Sincronizado con APIM)
+        @GetMapping("/api/v2/switch/health")
+        Map<String, String> healthCheck();
+
+        // Listar Bancos (Ruta real en ms-directorio via APIM si está expuesta, o
+        // fallback a /api/v1/instituciones)
+        @GetMapping("/api/v1/instituciones")
+        List<Map<String, Object>> obtenerBancos();
+
+        // Funding / Disponibilidad (Ruta real en ms-contabilidad)
+        @GetMapping("/api/v1/funding/available/{bic}/{monto}")
+        Map<String, Object> verificarDisponibilidad(@PathVariable("bic") String bic,
+                        @PathVariable("monto") Double monto);
 }

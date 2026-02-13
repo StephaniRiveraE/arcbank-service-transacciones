@@ -90,27 +90,24 @@ public class SwitchClientService {
                         String isoCode = "MS03"; // Default: Error Técnico
 
                         if (errorMsg != null) {
-                                // Busqueda simple de códigos en el string crudo (funciona para JSON array u
-                                // objeto)
                                 if (errorMsg.contains("AC01"))
                                         isoCode = "AC01";
                                 else if (errorMsg.contains("AC04"))
                                         isoCode = "AC04";
                                 else if (errorMsg.contains("AC06"))
-                                        isoCode = "AC06"; // Cuenta bloqueada
+                                        isoCode = "AC06";
                                 else if (errorMsg.contains("AG01"))
                                         isoCode = "AG01";
                                 else if (errorMsg.contains("AM04"))
                                         isoCode = "AM04";
                                 else if (errorMsg.contains("CH03"))
-                                        isoCode = "CH03"; // Límite Excedido
+                                        isoCode = "CH03";
                                 else if (errorMsg.contains("AM05") || errorMsg.contains("DUPL"))
                                         isoCode = "MD01";
                                 else if (errorMsg.contains("RC01"))
                                         isoCode = "RC01";
                         }
 
-                        // Lanzar excepción limpia
                         String finalMsg = isoCode.equals("MS03") ? "Error técnico en Switch/Banco Destino" : errorMsg;
                         throw new RuntimeException(isoCode + " - " + finalMsg);
 
@@ -127,15 +124,14 @@ public class SwitchClientService {
 
                 SwitchDevolucionRequest isoRequest = SwitchDevolucionRequest.builder()
                                 .header(SwitchDevolucionRequest.Header.builder()
-                                                .messageId(UUID.randomUUID().toString()) // UUID Puro sin prefijos
+                                                .messageId(UUID.randomUUID().toString())
                                                 .creationDateTime(java.time.Instant.now()
                                                                 .truncatedTo(java.time.temporal.ChronoUnit.SECONDS)
                                                                 .toString())
                                                 .originatingBankId(bancoCodigo)
                                                 .build())
                                 .body(SwitchDevolucionRequest.Body.builder()
-                                                .returnInstructionId(UUID.randomUUID().toString()) // UUID Puro sin
-                                                                                                   // prefijos
+                                                .returnInstructionId(UUID.randomUUID().toString())
                                                 .originalInstructionId(originalInstructionId != null
                                                                 ? originalInstructionId.trim()
                                                                 : null)
@@ -150,33 +146,40 @@ public class SwitchClientService {
                 try {
                         String response = switchClient.enviarDevolucion(isoRequest);
                         log.info("Respuesta de Devolución del Switch (200 OK): {}", response);
-
                         return response;
-
                 } catch (Exception e) {
                         log.error("Error al solicitar reverso (Switch rechazó): {}", e.getMessage());
-
                         throw new RuntimeException("Switch rechazó el reverso: " + e.getMessage());
                 }
         }
 
-        public java.util.List<java.util.Map<String, String>> obtenerMotivosDevolucion() {
+        public java.util.List<java.util.Map<String, Object>> obtenerBancos() {
                 try {
-                        return switchClient.obtenerMotivosDevolucion();
+                        return switchClient.obtenerBancos();
                 } catch (Exception e) {
-                        log.error("Error al obtener motivos del Switch: {}", e.getMessage());
+                        log.error("Error al obtener bancos del Switch: {}", e.getMessage());
                         return java.util.Collections.emptyList();
                 }
+        }
+
+        public java.util.List<java.util.Map<String, String>> obtenerMotivosDevolucion() {
+                // Endpoint no existe en APIM según análisis. Retornamos lista fija de ISO
+                // 20022.
+                return java.util.List.of(
+                                java.util.Map.of("code", "AC03", "description", "Cuenta Inválida"),
+                                java.util.Map.of("code", "AM04", "description", "Fondos Insuficientes"),
+                                java.util.Map.of("code", "AC04", "description", "Cuenta Cerrada"),
+                                java.util.Map.of("code", "AC06", "description", "Cuenta Bloqueada"),
+                                java.util.Map.of("code", "AG01", "description", "Transacción Prohibida"),
+                                java.util.Map.of("code", "MD01", "description", "Transacción Duplicada"),
+                                java.util.Map.of("code", "MS03", "description", "Error Técnico"));
         }
 
         private static String mapearErrorIso(String internalCode) {
                 if (internalCode == null)
                         return "MS03";
-
                 String code = internalCode.toUpperCase().trim();
-
                 return switch (code) {
-
                         case "TECH", "ERROR_TECNICO", "MS03" -> "MS03";
                         case "CUENTA_INVALIDA", "AC03" -> "AC03";
                         case "SALDO_INSUFICIENTE", "AM04" -> "AM04";
@@ -184,15 +187,8 @@ public class SwitchClientService {
                         case "CUENTA_BLOQUEADA", "AC06" -> "AC06";
                         case "OPERACION_PROHIBIDA", "AG01" -> "AG01";
                         case "DUPLICADO", "DUPL", "AM05", "MD01" -> "AM05";
-                        case "FRAUDE", "FRAD", "FR01" -> "FRAD";
-                        case "CUST", "CLIENTE" -> "CUST";
-                        default -> {
-                                if (code.matches("^[A-Z0-9]{4}$")) {
-                                        yield code;
-                                }
-                                log.warn("Código de devolución desconocido '{}', mapeando a MS03", code);
-                                yield "MS03";
-                        }
+                        case "FRAUDE", "FRAD", "FR01" -> "FR01";
+                        default -> code.matches("^[A-Z0-9]{4}$") ? code : "MS03";
                 };
         }
 
@@ -210,9 +206,7 @@ public class SwitchClientService {
                 java.util.Map<String, Object> body = java.util.Map.of(
                                 "targetBankId", targetBankId,
                                 "targetAccountNumber", targetAccountNumber);
-
                 java.util.Map<String, Object> request = java.util.Map.of("header", header, "body", body);
-
                 try {
                         return switchClient.validarCuentaExterna(request);
                 } catch (Exception e) {
@@ -224,7 +218,8 @@ public class SwitchClientService {
 
         public java.util.Map<String, Object> obtenerSaldoTecnico() {
                 try {
-                        return switchClient.obtenerSaldoTecnico(bancoCodigo);
+                        // BIC = bancoCodigo, Monto default = 0.0 para solo consulta
+                        return switchClient.verificarDisponibilidad(bancoCodigo, 0.0);
                 } catch (Exception e) {
                         log.error("Error obteniendo saldo técnico en el Switch: {}", e.getMessage());
                         return java.util.Map.of("error", e.getMessage(), "bankId", bancoCodigo);
