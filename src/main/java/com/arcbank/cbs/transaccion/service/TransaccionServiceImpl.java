@@ -388,6 +388,21 @@ public class TransaccionServiceImpl implements TransaccionService {
         Transaccion trx = transaccionRepository.findById(idTransaccion)
                 .orElseThrow(() -> new BusinessException("Transacción no encontrada con ID: " + idTransaccion));
 
+        return ejecutarSolicitudDevolucion(trx, motivo);
+    }
+
+    @Override
+    @Transactional
+    public TransaccionResponseDTO solicitarDevolucionPorReferencia(String referencia, String motivo) {
+        log.info("Solicitando devolución para Tx Ref: {} | Motivo: {}", referencia, motivo);
+
+        Transaccion trx = transaccionRepository.findByReferencia(referencia)
+                .orElseThrow(() -> new BusinessException("Transacción no encontrada con Referencia: " + referencia));
+
+        return ejecutarSolicitudDevolucion(trx, motivo);
+    }
+
+    private TransaccionResponseDTO ejecutarSolicitudDevolucion(Transaccion trx, String motivo) {
         if (trx.getFechaCreacion().isBefore(java.time.LocalDateTime.now().minusHours(24))) {
             throw new BusinessException("El tiempo límite de 24h para devoluciones ha expirado.");
         }
@@ -653,7 +668,7 @@ public class TransaccionServiceImpl implements TransaccionService {
         Transaccion tx = transaccionRepository.findByCodigoReferencia(codigoReferencia)
                 .orElseThrow(() -> new BusinessException(
                         "Transacción no encontrada con código de referencia: " + codigoReferencia));
-        
+
         // Reutilizamos la lógica completa de detalle (validaciones, switch, cliente)
         return obtenerDetallePorId(tx.getIdTransaccion());
     }

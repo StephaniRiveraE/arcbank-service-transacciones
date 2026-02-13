@@ -56,11 +56,19 @@ public class Controller {
     }
 
     @PostMapping("/{id}/devolucion")
-    @Operation(summary = "Solicitar devolución de transacción (Reverso)")
+    @Operation(summary = "Solicitar devolución de transacción (Reverso) por ID numérico")
     public ResponseEntity<TransaccionResponseDTO> solicitarDevolucion(
             @PathVariable Integer id,
             @RequestBody com.arcbank.cbs.transaccion.dto.DevolucionRequestDTO request) {
         return ResponseEntity.ok(transaccionService.solicitarDevolucion(id, request.getMotivo()));
+    }
+
+    @PostMapping("/referencia/{referencia}/devolucion")
+    @Operation(summary = "Solicitar devolución de transacción (Reverso) por UUID/Referencia")
+    public ResponseEntity<TransaccionResponseDTO> solicitarDevolucionPorReferencia(
+            @PathVariable String referencia,
+            @RequestBody com.arcbank.cbs.transaccion.dto.DevolucionRequestDTO request) {
+        return ResponseEntity.ok(transaccionService.solicitarDevolucionPorReferencia(referencia, request.getMotivo()));
     }
 
     @GetMapping("/motivos-devolucion")

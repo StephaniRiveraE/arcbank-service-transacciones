@@ -23,6 +23,17 @@ spring:
     baseline-on-migrate: false
 
 # Actuator Configuration for K8s Probes
+  rabbitmq:
+    host: ${SPRING_RABBITMQ_HOST:b-455e546c-be71-4fe2-ba0f-bd3112e6c220.mq.us-east-2.on.aws}
+    port: ${SPRING_RABBITMQ_PORT:5671}
+    username: ${SPRING_RABBITMQ_USERNAME:arcbank}
+    password: ${SPRING_RABBITMQ_PASSWORD:arcbankpass}
+    virtual-host: /
+    ssl:
+      enabled: ${SPRING_RABBITMQ_SSL_ENABLED:true}
+      algorithm: ${SPRING_RABBITMQ_SSL_ALGORITHM:TLSv1.2}
+
+# Actuator Configuration for K8s Probes
 management:
   endpoints:
     web:
@@ -39,16 +50,6 @@ management:
     readinessstate:
       enabled: true
 
-  rabbitmq:
-    host: ${SPRING_RABBITMQ_HOST:b-455e546c-be71-4fe2-ba0f-bd3112e6c220.mq.us-east-2.on.aws}
-    port: ${SPRING_RABBITMQ_PORT:5671}
-    username: ${SPRING_RABBITMQ_USERNAME:arcbank}
-    password: ${SPRING_RABBITMQ_PASSWORD:arcbankpass}
-    virtual-host: /
-    ssl:
-      enabled: ${SPRING_RABBITMQ_SSL_ENABLED:true}
-      algorithm: ${SPRING_RABBITMQ_SSL_ALGORITHM:TLSv1.2}
-
 server:
   port: ${SERVER_PORT:8080}
 
@@ -60,7 +61,7 @@ app:
     network-url: ${APP_SWITCH_NETWORK_URL:http://34.16.106.7:8000}
     apikey: ${APP_SWITCH_APIKEY:ARCBANK_SECRET_KEY_2025_XYZ}
   apim:
-    endpoint: ${APIM_ENDPOINT:https://gf0js7uezg.execute-api.us-east-2.amazonaws.com/dev}
+    endpoint: ${APIM_ENDPOINT:http://switch-ms-nucleo.switch.svc.cluster.local}
     origin-secret: ${APIM_ORIGIN_SECRET:change-me}
     cognito:
       domain: ${COGNITO_DOMAIN:https://auth-banca-digiconecu-dev-lhd4go.auth.us-east-2.amazoncognito.com}
