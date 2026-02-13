@@ -35,4 +35,7 @@ public interface SwitchClient {
 
         @PostMapping("/api/v2/switch/accounts/lookup")
         Map<String, Object> validarCuentaExterna(@RequestBody Map<String, Object> request);
+
+        @GetMapping("/funding/{bankId}")
+        Map<String, Object> obtenerSaldoTecnico(@PathVariable("bankId") String bankId);
 }

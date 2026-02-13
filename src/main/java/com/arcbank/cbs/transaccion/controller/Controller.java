@@ -127,4 +127,15 @@ public class Controller {
                     .body(java.util.Map.of("error", "No se pudo obtener detalle: " + e.getMessage()));
         }
     }
+
+    @GetMapping("/saldo-tecnico")
+    @Operation(summary = "Obtener el saldo técnico del banco en el Switch (Funding)")
+    public ResponseEntity<?> obtenerSaldoTecnico() {
+        try {
+            return ResponseEntity.ok(transaccionService.obtenerSaldoTecnico());
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body(java.util.Map.of("error", "No se pudo obtener saldo técnico: " + e.getMessage()));
+        }
+    }
 }

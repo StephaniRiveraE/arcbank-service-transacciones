@@ -38,4 +38,6 @@ public interface TransaccionService {
         java.util.Map<String, Object> buscarPorCodigoReferencia(String codigoReferencia);
 
         java.util.Map<String, Object> obtenerDetallePorId(Integer id);
+
+        java.util.Map<String, Object> obtenerSaldoTecnico();
 }

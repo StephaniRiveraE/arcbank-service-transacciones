@@ -221,4 +221,13 @@ public class SwitchClientService {
                         throw new RuntimeException("Error validando cuenta: " + e.getMessage());
                 }
         }
+
+        public java.util.Map<String, Object> obtenerSaldoTecnico() {
+                try {
+                        return switchClient.obtenerSaldoTecnico(bancoCodigo);
+                } catch (Exception e) {
+                        log.error("Error obteniendo saldo técnico en el Switch: {}", e.getMessage());
+                        return java.util.Map.of("error", e.getMessage(), "bankId", bancoCodigo);
+                }
+        }
 }
