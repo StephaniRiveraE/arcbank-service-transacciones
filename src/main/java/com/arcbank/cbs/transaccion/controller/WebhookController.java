@@ -34,18 +34,22 @@ public class WebhookController {
                                 log.info("🔍 Webhook detectado como CONSULTA DE CUENTA (acmt.023)");
                                 String accountId = null;
 
-                                // Segun instruccion Switch: Usamos el campo 'creditor' por compatibilidad
-                                if (body != null && body.get("creditor") != null) {
+                                // El Switch envía body.targetAccountNumber
+                                if (body != null && body.get("targetAccountNumber") != null) {
+                                        accountId = (String) body.get("targetAccountNumber");
+                                }
+                                // Fallback: creditor.accountId (compatibilidad)
+                                if (accountId == null && body != null && body.get("creditor") != null) {
                                         Map<String, Object> creditor = (Map<String, Object>) body.get("creditor");
                                         accountId = (String) creditor.get("accountId");
                                 }
 
                                 if (accountId == null) {
-                                        log.warn("Solicitud acmt.023 recibida sin 'creditor.accountId'.");
+                                        log.warn("Solicitud acmt.023 recibida sin 'targetAccountNumber' ni 'creditor.accountId'.");
                                         return ResponseEntity.ok(Map.of(
                                                         "status", "FAILED",
                                                         "data", Map.of("mensaje",
-                                                                        "Formato inválido: Falta creditor.accountId")));
+                                                                        "Formato inválido: Falta targetAccountNumber")));
                                 }
 
                                 Map<String, Object> result = transaccionService.validarCuentaLocal(accountId);
