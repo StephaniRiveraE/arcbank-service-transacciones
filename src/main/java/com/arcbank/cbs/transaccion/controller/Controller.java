@@ -88,6 +88,11 @@ public class Controller {
                     .body(java.util.Map.of("error", "Faltan datos: targetBankId o targetAccountNumber"));
         }
 
+        // Mapeo temporal de nombres a códigos Switch
+        if ("BANTEC".equalsIgnoreCase(targetBankId)) {
+            targetBankId = "100050";
+        }
+
         try {
             return ResponseEntity.ok(transaccionService.validarCuentaExterna(targetBankId, targetAccountNumber));
         } catch (Exception e) {
