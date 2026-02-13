@@ -39,39 +39,62 @@ public class CognitoTokenService {
             return cachedToken;
         }
 
-        log.info("Obteniendo nuevo token de Cognito...");
+        log.info("🔐 Solicitando nuevo token de acceso a Cognito para Client ID: {}", clientId);
         try {
             String tokenUrl = cognitoDomain + "/oauth2/token";
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
+            // OAuth2 Standard: Basic Auth for client_id:client_secret
+            String auth = clientId + ":" + clientSecret;
+            byte[] encodedAuth = java.util.Base64.getEncoder().encode(auth.getBytes());
+            String authHeader = "Basic " + new String(encodedAuth);
+            headers.set("Authorization", authHeader);
+
             MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
             map.add("grant_type", "client_credentials");
-            map.add("client_id", clientId);
-            map.add("client_secret", clientSecret);
-            map.add("scope", scope);
+            if (scope != null && !scope.isBlank()) {
+                map.add("scope", scope);
+            }
 
             HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
 
+            log.debug("Enviando POST a {} con scope {}", tokenUrl, scope);
             ResponseEntity<Map> response = restTemplate.postForEntity(tokenUrl, request, Map.class);
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 Map body = response.getBody();
                 cachedToken = (String) body.get("access_token");
-                Integer expiresIn = (Integer) body.get("expires_in");
 
-                // Cachear token con un margen de seguridad de 60 segundos
-                tokenExpiration = LocalDateTime.now().plusSeconds(expiresIn - 60);
+                // Manejar tanto Integer como Long para expires_in
+                Number expiresIn = (Number) body.get("expires_in");
+                long seconds = expiresIn != null ? expiresIn.longValue() : 3600;
 
-                log.info("Token de Cognito obtenido exitosamente. Expira en {} segundos", expiresIn);
+                // Cachear token con un margen de seguridad de 5 minutos (300s) para evitar
+                // fallos cercanos al vencimiento
+                tokenExpiration = LocalDateTime.now().plusSeconds(seconds - 300);
+
+                log.info("✅ Token de Cognito obtenido exitosamente. Válido por {} seg. Caché hasta: {}", seconds,
+                        tokenExpiration);
                 return cachedToken;
             } else {
-                throw new RuntimeException("Error obteniendo token de Cognito: " + response.getStatusCode());
+                log.error("❌ Error en respuesta de Cognito: Status={}, Body={}", response.getStatusCode(),
+                        response.getBody());
+                throw new RuntimeException("Error en respuesta de Cognito: " + response.getStatusCode());
             }
         } catch (Exception e) {
-            log.error("Fallo al obtener token de Cognito: {}", e.getMessage());
-            throw new RuntimeException("Fallo de autenticación con Cognito", e);
+            log.error("🚫 Error crítico obteniendo token de Cognito: {}", e.getMessage());
+            // Limpiar caché en caso de error para reintentar limpiamente en la próxima
+            // llamada
+            clearCache();
+            throw new RuntimeException("Fallo de autenticación con la red interbancaria (Cognito)", e);
         }
+    }
+
+    public synchronized void clearCache() {
+        log.warn("🧹 Limpiando caché de token de Cognito por solicitud o error.");
+        this.cachedToken = null;
+        this.tokenExpiration = null;
     }
 }

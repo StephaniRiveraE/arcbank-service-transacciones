@@ -26,7 +26,7 @@ public interface SwitchClient {
         @PostMapping("/api/v2/switch/returns")
         String enviarDevolucion(@RequestBody com.arcbank.cbs.transaccion.dto.SwitchDevolucionRequest request);
 
-        // Account Lookup (Sincronizado con APIM)
+        // Account Lookup (Sincronizado con ms-directorio via APIM)
         @PostMapping("/api/v2/switch/account-lookup")
         Map<String, Object> validarCuentaExterna(@RequestBody Map<String, Object> request);
 
@@ -40,7 +40,14 @@ public interface SwitchClient {
         List<Map<String, Object>> obtenerBancos();
 
         // Funding / Disponibilidad (Ruta real en ms-contabilidad)
+        @PostMapping("/api/v2/switch/funding")
+        Map<String, Object> recargarFondeo(@RequestBody Map<String, Object> request);
+
         @GetMapping("/api/v1/funding/available/{bic}/{monto}")
         Map<String, Object> verificarDisponibilidad(@PathVariable("bic") String bic,
                         @PathVariable("monto") Double monto);
+
+        // Compensación
+        @PostMapping("/api/v2/compensation/upload")
+        Map<String, Object> subirCompensacion(@RequestBody Map<String, Object> request);
 }

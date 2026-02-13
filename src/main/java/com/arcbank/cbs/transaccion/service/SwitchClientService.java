@@ -202,27 +202,53 @@ public class SwitchClientService {
         }
 
         public java.util.Map<String, Object> validarCuenta(String targetBankId, String targetAccountNumber) {
-                java.util.Map<String, Object> header = java.util.Map.of("originatingBankId", bancoCodigo);
-                java.util.Map<String, Object> body = java.util.Map.of(
-                                "targetBankId", targetBankId,
-                                "targetAccountNumber", targetAccountNumber);
-                java.util.Map<String, Object> request = java.util.Map.of("header", header, "body", body);
+                // Según la guía v2.0.0 Paso 5, el body debe ser plano:
+                // { "accountNumber": "...", "bankCode": "..." }
+                java.util.Map<String, Object> request = new java.util.HashMap<>();
+                request.put("bankCode", targetBankId);
+                request.put("accountNumber", targetAccountNumber);
+
+                log.info("🔍 Enviando Account Lookup a ms-directorio via APIM: {}", request);
                 try {
-                        return switchClient.validarCuentaExterna(request);
+                        Map<String, Object> response = switchClient.validarCuentaExterna(request);
+                        log.info("✅ Respuesta de validación recibida: {}", response);
+
+                        // Si la respuesta viene envuelta en 'data' o 'body', la extraemos para el
+                        // controller
+                        if (response.containsKey("body")) {
+                                return (Map<String, Object>) response.get("body");
+                        }
+                        if (response.containsKey("data")) {
+                                return (Map<String, Object>) response.get("data");
+                        }
+
+                        return response;
+                } catch (feign.FeignException e) {
+                        log.error("❌ Error API APIM ms-directorio (status {}): {}", e.status(), e.contentUTF8());
+                        throw new RuntimeException(
+                                        "El recurso solicitado no existe o el banco destino no respondió. Details: "
+                                                        + e.contentUTF8());
                 } catch (Exception e) {
-                        log.error("Error validando cuenta externa {} en {}: {}", targetAccountNumber, targetBankId,
-                                        e.getMessage());
-                        throw new RuntimeException("Error validando cuenta: " + e.getMessage());
+                        log.error("❌ Error de comunicación con ms-directorio: {}", e.getMessage());
+                        throw new RuntimeException("Error de comunicación con la red interbancaria: " + e.getMessage());
                 }
         }
 
         public java.util.Map<String, Object> obtenerSaldoTecnico() {
                 try {
                         // BIC = bancoCodigo, Monto default = 0.0 para solo consulta
+                        // Intentamos primero el GET de disponibilidad (v1)
+                        log.info("💰 Consultando saldo técnico (Disponibilidad) en Switch para: {}", bancoCodigo);
                         return switchClient.verificarDisponibilidad(bancoCodigo, 0.0);
                 } catch (Exception e) {
-                        log.error("Error obteniendo saldo técnico en el Switch: {}", e.getMessage());
-                        return java.util.Map.of("error", e.getMessage(), "bankId", bancoCodigo);
+                        log.warn("⚠️ Falló consulta v1, intentando POST v2/switch/funding: {}", e.getMessage());
+                        try {
+                                return switchClient.recargarFondeo(Map.of("bic", bancoCodigo, "queryOnly", true));
+                        } catch (Exception e2) {
+                                log.error("❌ No se pudo obtener saldo técnico por ninguna ruta: {}", e2.getMessage());
+                                return java.util.Map.of("error", e2.getMessage(), "bankId", bancoCodigo, "status",
+                                                "ERROR");
+                        }
                 }
         }
 }
