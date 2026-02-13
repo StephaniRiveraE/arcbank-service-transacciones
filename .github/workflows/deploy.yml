@@ -128,10 +128,7 @@ jobs:
                       - name: COGNITO_CLIENT_ID
                         value: "3jprfuk1phejsm0sjr8p50n91e"
                       - name: COGNITO_CLIENT_SECRET
-                        valueFrom:
-                          secretKeyRef:
-                            name: "arcbank-cognito-credentials"
-                            key: "client-secret"
+                        value: "1sbg167h178p9cgfradk51c2qla1u4d5en3tnmljc91kc9rbn9nr"
                       - name: COGNITO_DOMAIN
                         value: "https://auth-banca-digiconecu-dev-lhd4go.auth.us-east-2.amazoncognito.com"
                       - name: COGNITO_SCOPE
@@ -143,10 +140,7 @@ jobs:
                       - name: SPRING_RABBITMQ_USERNAME
                         value: "arcbank"
                       - name: SPRING_RABBITMQ_PASSWORD
-                        valueFrom:
-                          secretKeyRef:
-                            name: "arcbank-rabbitmq-credentials"
-                            key: "password"
+                        value: "arcbank"
                       - name: SPRING_RABBITMQ_SSL_ENABLED
                         value: "true"
                     livenessProbe:
