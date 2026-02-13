@@ -93,9 +93,10 @@ public class Controller {
             targetBankId = "200100";
         }
 
-        // Mapeo temporal de nombres a códigos Switch
-        if ("BANTEC".equalsIgnoreCase(targetBankId)) {
-            targetBankId = "100050";
+        // CORRECCIÓN: El Switch espera el BIC (BANTEC), no códigos numéricos.
+        // Mapeamos cualquier variante conocida al BIC correcto.
+        if ("100050".equals(targetBankId) || "200100".equals(targetBankId) || "BANTEC".equalsIgnoreCase(targetBankId)) {
+            targetBankId = "BANTEC";
         }
 
         return ResponseEntity.ok(transaccionService.validarCuentaExterna(targetBankId, targetAccountNumber));
