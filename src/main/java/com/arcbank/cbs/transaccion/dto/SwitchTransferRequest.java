@@ -53,6 +53,5 @@ public class SwitchTransferRequest {
         private String accountId;
         private String accountType;
         private String bankId;
-        private String targetBankId;
     }
 }

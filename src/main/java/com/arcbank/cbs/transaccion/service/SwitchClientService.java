@@ -54,7 +54,7 @@ public class SwitchClientService {
                                                                 .name(request.getCreditorName())
                                                                 .accountId(request.getCreditorAccount())
                                                                 .accountType("AHORROS")
-                                                                .targetBankId(request.getTargetBankId() != null
+                                                                .bankId(request.getTargetBankId() != null
                                                                                 ? request.getTargetBankId()
                                                                                 : "BANTEC")
                                                                 .build())
@@ -202,32 +202,34 @@ public class SwitchClientService {
         }
 
         public java.util.Map<String, Object> validarCuenta(String targetBankId, String targetAccountNumber) {
-                // Según la guía v2.0.0 Paso 5, el body debe ser plano:
-                // { "accountNumber": "...", "bankCode": "..." }
-                java.util.Map<String, Object> request = new java.util.HashMap<>();
-                request.put("bankCode", targetBankId);
-                request.put("accountNumber", targetAccountNumber);
+                // Según la Guía v2.0, el request debe estar envuelto en header y body
+                java.util.Map<String, Object> header = java.util.Map.of(
+                                "originatingBankId", bancoCodigo,
+                                "messageId", "VAL-" + UUID.randomUUID().toString().substring(0, 8));
 
-                log.info("🔍 Enviando Account Lookup a ms-directorio via APIM: {}", request);
+                java.util.Map<String, Object> body = java.util.Map.of(
+                                "targetBankId", targetBankId,
+                                "targetAccountNumber", targetAccountNumber);
+
+                java.util.Map<String, Object> request = java.util.Map.of("header", header, "body", body);
+
+                log.info("🔍 Enviando Account Lookup (acmt.023) via APIM: {}", request);
                 try {
                         Map<String, Object> response = switchClient.validarCuentaExterna(request);
                         log.info("✅ Respuesta de validación recibida: {}", response);
 
-                        // Si la respuesta viene envuelta en 'data' o 'body', la extraemos para el
-                        // controller
-                        if (response.containsKey("body")) {
-                                return (Map<String, Object>) response.get("body");
-                        }
+                        // El Switch v2.0 responde con { status: "SUCCESS", data: { ... } }
                         if (response.containsKey("data")) {
                                 return (Map<String, Object>) response.get("data");
+                        }
+                        if (response.containsKey("body")) {
+                                return (Map<String, Object>) response.get("body");
                         }
 
                         return response;
                 } catch (feign.FeignException e) {
                         log.error("❌ Error API APIM ms-directorio (status {}): {}", e.status(), e.contentUTF8());
-                        throw new RuntimeException(
-                                        "El recurso solicitado no existe o el banco destino no respondió. Details: "
-                                                        + e.contentUTF8());
+                        throw new RuntimeException("El recurso solicitado no existe o el banco destino no respondió.");
                 } catch (Exception e) {
                         log.error("❌ Error de comunicación con ms-directorio: {}", e.getMessage());
                         throw new RuntimeException("Error de comunicación con la red interbancaria: " + e.getMessage());
