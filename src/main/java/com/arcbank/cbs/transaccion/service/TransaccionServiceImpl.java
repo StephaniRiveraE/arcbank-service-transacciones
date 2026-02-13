@@ -157,37 +157,53 @@ public class TransaccionServiceImpl implements TransaccionService {
                             }
                         }
 
-                        // --- Implementación Polling Síncrono (UX Sync) ---
-                        nuevoEstado = "PENDIENTE"; // Asumimos pendiente hasta confirmar
+                        // --- FIX: Verificar si el POST ya retornó estado final ---
                         boolean confirmado = false;
-
-                        // Máx 10 intentos de 1.5s = 15s timeout
-                        for (int i = 0; i < 10; i++) {
-                            try {
-                                Thread.sleep(1500);
-                            } catch (InterruptedException ie) {
-                                Thread.currentThread().interrupt();
-                            }
-
-                            Map<String, Object> estadoTx = switchClientService.consultarEstado(trx.getReferencia());
-                            if (estadoTx != null) {
-                                String status = (String) estadoTx.get("status");
-                                if ("COMPLETED".equalsIgnoreCase(status)) {
-                                    nuevoEstado = "COMPLETADA";
-                                    confirmado = true;
-                                    break;
-                                }
-                                if ("FAILED".equalsIgnoreCase(status)) {
-                                    String errorMsg = (String) estadoTx.getOrDefault("error", "Rechazo del Switch");
-                                    throw new RuntimeException(errorMsg); // Rompe para rollback
-                                }
-                                // Si es PENDING o RECEIVED, seguimos esperando
+                        if (respSwitch != null) {
+                            String estadoInicial = (String) respSwitch.get("estado");
+                            if ("COMPLETED".equalsIgnoreCase(estadoInicial)) {
+                                log.info("Switch retornó COMPLETED en respuesta inicial. Omitiendo polling.");
+                                nuevoEstado = "COMPLETADA";
+                                confirmado = true;
+                            } else if ("FAILED".equalsIgnoreCase(estadoInicial)) {
+                                String errorMsg = respSwitch.getOrDefault("error", "Rechazo del Switch").toString();
+                                throw new RuntimeException(errorMsg);
                             }
                         }
 
+                        // --- Polling Síncrono solo si el estado inicial no es final ---
                         if (!confirmado) {
-                            log.warn("Transferencia {} en TIMEOUT tras polling.", trx.getReferencia());
-                            // Se queda en PENDIENTE
+                            nuevoEstado = "PENDIENTE";
+
+                            // Máx 10 intentos de 1.5s = 15s timeout
+                            for (int i = 0; i < 10; i++) {
+                                try {
+                                    Thread.sleep(1500);
+                                } catch (InterruptedException ie) {
+                                    Thread.currentThread().interrupt();
+                                }
+
+                                Map<String, Object> estadoTx = switchClientService.consultarEstado(trx.getReferencia());
+                                if (estadoTx != null) {
+                                    // FIX: El Switch usa campo "estado", no "status"
+                                    String status = (String) estadoTx.get("estado");
+                                    if ("COMPLETED".equalsIgnoreCase(status)) {
+                                        nuevoEstado = "COMPLETADA";
+                                        confirmado = true;
+                                        break;
+                                    }
+                                    if ("FAILED".equalsIgnoreCase(status)) {
+                                        String errorMsg = (String) estadoTx.getOrDefault("error", "Rechazo del Switch");
+                                        throw new RuntimeException(errorMsg);
+                                    }
+                                    // Si es PENDING o RECEIVED, seguimos esperando
+                                }
+                            }
+
+                            if (!confirmado) {
+                                log.warn("Transferencia {} en TIMEOUT tras polling.", trx.getReferencia());
+                                // Se queda en PENDIENTE
+                            }
                         }
 
                     } catch (Exception e) {
